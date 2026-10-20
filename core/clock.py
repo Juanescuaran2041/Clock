@@ -1,4 +1,4 @@
-from dial import Dial
+from core.dial import Dial
 
 SECONDS_PER_MINUTE = 60
 MINUTES_PER_HOUR = 60
