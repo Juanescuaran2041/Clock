@@ -1,5 +1,3 @@
-"""A pixel canvas that can be saved as a 24-bit BMP image."""
-
 Color = tuple[int, int, int]  # (red, green, blue), each from 0 to 255
 
 WHITE: Color = (255, 255, 255)
