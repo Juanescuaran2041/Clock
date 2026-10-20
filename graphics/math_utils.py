@@ -7,6 +7,14 @@ def degrees_to_radians(degrees: float) -> float:
     return degrees * PI / 180
 
 
+def _wrap_angle(angle: float) -> float:
+    angle -= FULL_TURN * int(angle / FULL_TURN)
+    if angle > PI:
+        angle -= FULL_TURN
+    elif angle < -PI:
+        angle += FULL_TURN
+    return angle
+
 def sin(angle: float) -> float:
     angle = _wrap_angle(angle)
     term = angle
@@ -21,10 +29,3 @@ def cos(angle: float) -> float:
     return sin(angle + PI / 2)
 
 
-def _wrap_angle(angle: float) -> float:
-    angle -= FULL_TURN * int(angle / FULL_TURN)
-    if angle > PI:
-        angle -= FULL_TURN
-    elif angle < -PI:
-        angle += FULL_TURN
-    return angle
