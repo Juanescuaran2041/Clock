@@ -15,7 +15,6 @@ class Mark:
     def next(self, mark: "Mark") -> None:
         self.__next = mark
 
-
 class Dial:
 
     def __init__(self) -> None:
@@ -31,9 +30,9 @@ class Dial:
         return self.__first
 
     @property
-    def current_value(self) -> Mark:
+    def current_value(self) -> int:
         if self.__current is None:
-            raise ValueError("Current value is none")
+            raise ValueError("The dial is empty")
         return self.__current.value
 
     def __len__(self) -> int:
@@ -69,3 +68,13 @@ class Dial:
         for _ in range(steps % self.__size):
             mark = mark.next
         return mark
+
+    def tick(self) -> bool:
+        if self.__current is None:
+            raise ValueError("The dial is empty")
+        self.__current = self.__current.next
+        return self.__current is self.__first
+
+    def set_to(self, value:int):
+        current_mark = self.find_mark(value)
+        self.__current = current_mark
