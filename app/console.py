@@ -1,7 +1,10 @@
 from app.clock_app import ClockApp
 from app.parsing import parse_time
+from graphics.gif import GifWriter
 
 OUTPUT_FILE = "output/clock.bmp"
+ANIMATION_FILE = "output/clock.gif"
+DEFAULT_ANIMATION_SECONDS = 60
 
 HELP = """Commands:
   (Enter)            advance 1 second
@@ -10,6 +13,7 @@ HELP = """Commands:
   zone NAME          BOGOTA, NUEVA YORK, LONDRES, MADRID, TOKIO
   alarm HH:MM        set the alarm (in the zone being shown)
   clear              cancel the alarm
+  gif [N]            save N seconds (default 60) as an animation that runs by itself
   quit               exit"""
 
 
@@ -58,11 +62,19 @@ class ConsoleInterface:
             self.__app.set_alarm(hours, minutes)
         elif command == "clear":
             self.__app.cancel_alarm()
+        elif command == "gif":
+            self.__save_animation(int(argument) if argument else DEFAULT_ANIMATION_SECONDS)
         else:
             print(HELP)
             return True
         self.__refresh()
         return True
+
+    def __save_animation(self, seconds: int) -> None:
+        if seconds <= 0:
+            raise ValueError("Seconds must be positive")
+        GifWriter(self.__app.record(seconds)).save(ANIMATION_FILE)
+        print(f"Saved {ANIMATION_FILE}. Open it in a browser to watch it run.")
 
     def __refresh(self) -> None:
         self.__app.render().save_bmp(OUTPUT_FILE)
