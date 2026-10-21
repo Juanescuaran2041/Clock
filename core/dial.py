@@ -65,9 +65,8 @@ class Dial:
         raise ValueError(f"{value} is not on the dial")
 
     def move(self, mark: Mark, steps: int) -> Mark:
-        if (self.__size == 0):
-            return ValueError(f"{self.__size} no puede ser 0")
-
+        if self.__size == 0:
+            raise ValueError("The dial is empty")
         for _ in range(steps % self.__size):
             mark = mark.next
         return mark
@@ -78,6 +77,11 @@ class Dial:
         self.__current = self.__current.next
         return self.__current is self.__first
 
-    def set_to(self, value:int) -> None:
-        current_mark = self.find_mark(value)
-        self.__current = current_mark
+    def value_after(self, steps: int) -> int:
+        """Value `steps` marks away from the cursor (negative goes backward)."""
+        if self.__current is None:
+            raise ValueError("The dial is empty")
+        return self.move(self.__current, steps).value
+
+    def set_to(self, value: int) -> None:
+        self.__current = self.find_mark(value)
