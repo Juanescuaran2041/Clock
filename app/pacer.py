@@ -1,4 +1,4 @@
-DEFAULT_SPINS = 120_000_000  # a guess; every computer needs its own value
+DEFAULT_SPINS = 100_000_000  # a guess; every computer needs its own value
 
 
 class Pacer:
