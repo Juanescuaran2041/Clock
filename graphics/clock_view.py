@@ -62,6 +62,30 @@ class DigitalDisplay:
             Text(Point(left, 225), "SONANDO", RED, 4).draw(canvas)
 
 
+class CompactClockView:
+    """The same screen in a few dozen pixels, so a terminal can show it. Text uses scale 1."""
+
+    FACE_DETAIL = 0.4
+
+    def __init__(self, width: int, height: int) -> None:
+        self.__width = width
+        self.__height = height
+        radius = height // 2 - 2
+        self.__face = AnalogFace(Point(radius + 2, height // 2), radius, self.FACE_DETAIL)
+        self.__panel_center = (2 * radius + 4 + width) // 2  # middle of what is right of the face
+
+    def render(self, canvas: Canvas, reading: ClockReading) -> None:
+        canvas.fill(BACKGROUND)
+        self.__face.draw(canvas, reading)
+        middle = self.__height // 2
+        Text.centered_at(Point(self.__panel_center, middle - 7), reading.zone_name,
+                         PURPLE, 1).draw(canvas)
+        Text.centered_at(Point(self.__panel_center, middle + 5), reading.time_text(),
+                         NAVY, 1).draw(canvas)
+        color = RED if reading.alarm_ringing else ORANGE
+        Rectangle(0, 0, self.__width, self.__height, color, 1).draw(canvas)
+
+
 class ClockView:
     """Composes the analog face, the digital display and the alarm frame."""
 
