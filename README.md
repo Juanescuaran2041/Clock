@@ -12,7 +12,7 @@ python main.py
 
 Al iniciar se elige el modo:
 
-1. **Reloj en vivo en la terminal.** Se escribe la hora de Bogotá una sola vez (`HH:MM:SS`) y el reloj corre solo, dibujado con bloques de color ANSI. Muestra la esfera analógica con la hora, la zona y la alarma como texto debajo. Necesita una terminal de al menos 60 columnas por 32 filas.
+1. **Reloj en vivo en la terminal.** Se escribe la hora de Bogotá una sola vez (`HH:MM:SS`) y el reloj corre solo, dibujado con bloques de color ANSI. Dibuja la esfera analógica con la zona y la hora a su lado, y el estado de la alarma debajo. Necesita una terminal de al menos 104 columnas por 24 filas; si es más pequeña, la imagen se desordena.
 2. **Paso a paso con archivo de imagen.** Se avanza con comandos y se guarda `output/clock.bmp`.
 
 ### Menú del reloj en vivo
