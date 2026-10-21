@@ -30,6 +30,10 @@ class Clock:
     def seconds(self) -> int:
         return self.__seconds_dial.current_value
 
+    def hours_shifted(self, offset: int) -> int:
+        """Hours as seen `offset` hours ahead (or behind, if negative)."""
+        return self.__hours_dial.value_after(offset)
+
     def tick(self) -> None:
         if self.__seconds_dial.tick() and self.__minutes_dial.tick():
             self.__hours_dial.tick()
