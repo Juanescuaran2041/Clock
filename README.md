@@ -12,7 +12,7 @@ python main.py
 
 Al iniciar se elige el modo:
 
-1. **Reloj en vivo en la terminal.** Se escribe la hora de Bogotá una sola vez (`HH:MM:SS`) y el reloj corre solo, dibujado con bloques de color ANSI. Necesita una terminal de al menos 106 columnas por 27 filas.
+1. **Reloj en vivo en la terminal.** Se escribe la hora de Bogotá una sola vez (`HH:MM:SS`) y el reloj corre solo, dibujado con bloques de color ANSI. Muestra la esfera analógica con la hora, la zona y la alarma como texto debajo. Necesita una terminal de al menos 60 columnas por 32 filas.
 2. **Paso a paso con archivo de imagen.** Se avanza con comandos y se guarda `output/clock.bmp`.
 
 ### Menú del reloj en vivo
@@ -54,7 +54,7 @@ app/
   live.py               reloj en vivo en la terminal
   console.py            modo paso a paso (BMP / GIF)
   pacer.py              espera de ~1 segundo sin reloj del sistema
-  terminal_view.py      convierte el lienzo en texto con color
+  terminal_view.py      dibuja el lienzo como texto con color
   parsing.py            lectura de "HH:MM[:SS]"
 core/
   dial.py               Mark y Dial: la lista circular enlazada
