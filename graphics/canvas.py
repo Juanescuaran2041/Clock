@@ -55,6 +55,14 @@ class Canvas:
         index = (y * self.__width + x) * BYTES_PER_PIXEL
         self.__pixels[index:index + BYTES_PER_PIXEL] = self.__encode(color)
 
+    def to_ppm(self) -> bytes:
+        """The canvas as a PPM image (red, green, blue order), readable by Tk."""
+        rgb = bytearray(len(self.__pixels))
+        rgb[0::3] = self.__pixels[2::3]
+        rgb[1::3] = self.__pixels[1::3]
+        rgb[2::3] = self.__pixels[0::3]
+        return f"P6 {self.__width} {self.__height} 255\n".encode() + bytes(rgb)
+
     def save_bmp(self, path: str) -> None:
         """Write the canvas to disk as a BMP file."""
         pixel_data = self.__build_pixel_data()
