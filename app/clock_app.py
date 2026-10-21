@@ -53,3 +53,11 @@ class ClockApp:
     def render(self) -> Canvas:
         self.__view.render(self.__canvas, self.reading())
         return self.__canvas
+
+    def record(self, seconds: int) -> list[Canvas]:
+        """One frame per second, starting now. The clock ends `seconds` later."""
+        frames = []
+        for _ in range(seconds):
+            frames.append(self.render().copy())
+            self.advance(1)
+        return frames
