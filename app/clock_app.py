@@ -2,14 +2,13 @@ from core.alarm import Alarm
 from core.clock import Clock
 from core.clock_reading import ClockReading
 from core.time_zone import ZONES, find_zone
-from graphics.canvas import Canvas, Point
-from graphics.clock_view import AnalogFace, ClockView
-from graphics.palette import BACKGROUND
+from graphics.canvas import Canvas
+from graphics.clock_view import ClockView, CompactClockView
 
 CANVAS_WIDTH = 640
 CANVAS_HEIGHT = 300
-DIAL_SIZE = 46  # side of the small square canvas used to draw the face in a terminal
-DIAL_DETAIL = 0.4
+COMPACT_WIDTH = 100  # a terminal shows one pixel per column and two per row
+COMPACT_HEIGHT = 44
 
 
 class ClockApp:
@@ -22,9 +21,8 @@ class ClockApp:
         self.__alarm = Alarm()
         self.__canvas = Canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
         self.__view = ClockView(CANVAS_WIDTH, CANVAS_HEIGHT)
-        self.__dial = Canvas(DIAL_SIZE, DIAL_SIZE, BACKGROUND)
-        self.__dial_face = AnalogFace(Point(DIAL_SIZE // 2, DIAL_SIZE // 2),
-                                      DIAL_SIZE // 2 - 2, DIAL_DETAIL)
+        self.__compact_canvas = Canvas(COMPACT_WIDTH, COMPACT_HEIGHT)
+        self.__compact_view = CompactClockView(COMPACT_WIDTH, COMPACT_HEIGHT)
 
     @property
     def zone_names(self) -> list[str]:
@@ -60,11 +58,10 @@ class ClockApp:
         self.__view.render(self.__canvas, self.reading())
         return self.__canvas
 
-    def render_dial(self) -> Canvas:
-        """Only the analog face, small enough to be drawn with terminal characters."""
-        self.__dial.fill(BACKGROUND)
-        self.__dial_face.draw(self.__dial, self.reading())
-        return self.__dial
+    def render_compact(self) -> Canvas:
+        """The same screen in a small size, to be drawn with terminal characters."""
+        self.__compact_view.render(self.__compact_canvas, self.reading())
+        return self.__compact_canvas
 
     def record(self, seconds: int) -> list[Canvas]:
         """One frame per second, starting now. The clock ends `seconds` later."""
