@@ -2,6 +2,7 @@ from core.clock_reading import ClockReading
 from graphics.canvas import Canvas, Color, Point
 from graphics.math_utils import cos, degrees_to_radians, sin
 from graphics.palette import NAVY, RED
+from graphics.scaling import scaled
 from graphics.shapes import Line
 
 
@@ -17,12 +18,13 @@ class Hand:
         """Degrees measured clockwise from the 12."""
         raise NotImplementedError("Each hand computes its own angle")
 
-    def draw(self, canvas: Canvas, center: Point, radius: int, reading: ClockReading) -> None:
+    def draw(self, canvas: Canvas, center: Point, radius: int, reading: ClockReading,
+             detail: float = 1.0) -> None:
         radians = degrees_to_radians(self.angle(reading))
         length = radius * self._length_ratio
         tip = Point(round(center.x + length * sin(radians)),
                     round(center.y - length * cos(radians)))
-        Line(center, tip, self._color, self._thickness).draw(canvas)
+        Line(center, tip, self._color, scaled(self._thickness, detail)).draw(canvas)
 
 
 class HourHand(Hand):
