@@ -10,6 +10,13 @@ CALIBRATION_FRAMES = 10
 CLEAR_SCREEN = "\033[2J\033[H"
 CURSOR_HOME = "\033[H"
 CLEAR_LINE = "\033[K"
+BOLD = "\033[1m"
+RED = "\033[31m"
+RESET = "\033[0m"
+NEWLINE = chr(10)
+BELL = chr(7)
+MARGIN = 6  # columns left empty around the clock
+PICTURE_WIDTH = 46
 
 MENU = """Commands (Enter goes back to the clock):
   time HH:MM[:SS]    set the time (in Bogota time)
@@ -26,7 +33,7 @@ class LiveInterface:
 
     def __init__(self, app: ClockApp) -> None:
         self.__app = app
-        self.__view = TerminalView()
+        self.__view = TerminalView(MARGIN)
         self.__pacer = Pacer()
 
     def run(self) -> None:
@@ -51,10 +58,25 @@ class LiveInterface:
 
     def __show(self) -> None:
         reading = self.__app.reading()
-        picture = self.__view.render(self.__app.render())
-        status = f"[{reading.zone_name}] {reading.time_text()}   Ctrl+C: menu"
-        bell = "\a" if reading.alarm_ringing else ""
-        print(f"{CURSOR_HOME}{picture}\n{status}{CLEAR_LINE}{bell}", flush=True)
+        picture = self.__view.render(self.__app.render_dial())
+        ringing = "*** ALARMA SONANDO ***" if reading.alarm_ringing else ""
+        caption = (
+            "",
+            BOLD + self.__centered(reading.time_text()) + RESET,
+            self.__centered(reading.zone_name),
+            self.__centered(reading.alarm_label),
+            RED + self.__centered(ringing) + RESET,
+            "",
+            self.__centered("Ctrl+C: menu"),
+        )
+        padding = " " * MARGIN
+        text = NEWLINE.join(f"{padding}{line}{CLEAR_LINE}" for line in caption)
+        bell = BELL if reading.alarm_ringing else ""
+        print(f"{CURSOR_HOME}{NEWLINE}{picture}{NEWLINE}{text}{bell}", flush=True)
+
+    @staticmethod
+    def __centered(text: str) -> str:
+        return text.center(PICTURE_WIDTH)
 
     def __menu(self) -> bool:
         """Returns False when the program should end."""
