@@ -12,15 +12,24 @@ DEGREES_PER_MINUTE = 6
 DEGREES_PER_HOUR = 30
 
 
+class FaceStyle:
+    """How much the analog face draws. A small face has room for less."""
+
+    def __init__(self, detail: float = 1.0,
+                 numbered_hours: tuple[int, ...] = tuple(range(1, HOURS_ON_DIAL + 1)),
+                 minute_ticks: bool = True, number_ratio: float = 0.74) -> None:
+        self.detail = detail  # shrinks line widths and numbers
+        self.numbered_hours = numbered_hours
+        self.minute_ticks = minute_ticks
+        self.number_ratio = number_ratio  # distance of the numbers from the center, 0 to 1
+
+
 class AnalogFace:
-    def __init__(self, center: Point, radius: int, detail: float = 1.0,
-                 numbered_hours: tuple[int, ...] = tuple(range(1, HOURS_ON_DIAL + 1))) -> None:
-        """`detail` shrinks the line widths and numbers when the face is drawn small.
-        `numbered_hours` are the hours that get a number; a small face has room for few."""
-        self.__numbered_hours = numbered_hours
+    def __init__(self, center: Point, radius: int, style: FaceStyle = FaceStyle()) -> None:
         self.__center = center
         self.__radius = radius
-        self.__detail = detail
+        self.__style = style
+        self.__detail = style.detail
         self.__hands = (HourHand(), MinuteHand(), SecondHand())
 
     def draw(self, canvas: Canvas, reading: ClockReading) -> None:
@@ -40,6 +49,8 @@ class AnalogFace:
     def __draw_ticks(self, canvas: Canvas) -> None:
         for minute in range(MINUTES_ON_DIAL):
             is_hour_mark = minute % 5 == 0
+            if not (is_hour_mark or self.__style.minute_ticks):
+                continue
             inner_ratio = 0.86 if is_hour_mark else 0.92
             degrees = minute * DEGREES_PER_MINUTE
             Line(self.__point_on_dial(degrees, inner_ratio),
@@ -47,8 +58,8 @@ class AnalogFace:
                  NAVY, scaled(2 if is_hour_mark else 1, self.__detail)).draw(canvas)
 
     def __draw_numbers(self, canvas: Canvas) -> None:
-        for hour in self.__numbered_hours:
-            position = self.__point_on_dial(hour * DEGREES_PER_HOUR, 0.74)
+        for hour in self.__style.numbered_hours:
+            position = self.__point_on_dial(hour * DEGREES_PER_HOUR, self.__style.number_ratio)
             Text.centered_at(position, str(hour), NAVY, scaled(2, self.__detail)).draw(canvas)
 
 
@@ -68,15 +79,14 @@ class DigitalDisplay:
 class CompactClockView:
     """The same screen in a few dozen pixels, so a terminal can show it. Text uses scale 1."""
 
-    FACE_DETAIL = 0.4
-    NUMBERED_HOURS = (12, 3, 6, 9)  # all twelve numbers would not fit without touching
+    # only the four main numbers and hour marks: more would touch each other
+    FACE_STYLE = FaceStyle(0.4, (12, 3, 6, 9), minute_ticks=False, number_ratio=0.6)
 
     def __init__(self, width: int, height: int) -> None:
         self.__width = width
         self.__height = height
         radius = height // 2 - 2
-        self.__face = AnalogFace(Point(radius + 2, height // 2), radius, self.FACE_DETAIL,
-                                self.NUMBERED_HOURS)
+        self.__face = AnalogFace(Point(radius + 2, height // 2), radius, self.FACE_STYLE)
         self.__panel_center = (2 * radius + 4 + width) // 2  # middle of what is right of the face
 
     def render(self, canvas: Canvas, reading: ClockReading) -> None:
