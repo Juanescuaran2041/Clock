@@ -4,6 +4,8 @@ Reloj analógico y digital hecho **solo con Python y sin ningún import** de la 
 
 La estructura de datos central es la **lista circular enlazada**: cada manecilla es un anillo de marcas (`Mark`) que vuelve al inicio al terminar la vuelta, y los tres anillos están encadenados como los engranajes de un reloj.
 
+> **Otra versión del reloj:** [Clock-using-custom-library](https://github.com/Juanescuaran2041/Clock-using-custom-library.git) es otro reloj, hecho con una librería propia construida en C.
+
 - [Ejecución](#ejecución)
 - [Limitaciones y decisiones de diseño](#limitaciones-y-decisiones-de-diseño)
 - [La estructura de datos: lista circular enlazada](#la-estructura-de-datos-lista-circular-enlazada)
