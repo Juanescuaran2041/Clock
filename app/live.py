@@ -10,20 +10,34 @@ CALIBRATION_FRAMES = 10
 CLEAR_SCREEN = "\033[2J\033[H"
 CURSOR_HOME = "\033[H"
 CLEAR_LINE = "\033[K"
+HIDE_CURSOR = "\033[?25l"
+SHOW_CURSOR = "\033[?25h"
+BOLD = "\033[1m"
+DIM = "\033[2m"
 RED = "\033[31m"
+GREEN = "\033[32m"
 RESET = "\033[0m"
 NEWLINE = chr(10)
 BELL = chr(7)
 MARGIN = 2  # columns left empty before the picture
 
-MENU = """Commands (Enter goes back to the clock):
-  time HH:MM[:SS]    set the time (in Bogota time)
-  zone NAME          BOGOTA, NUEVA YORK, LONDRES, MADRID, TOKIO
-  alarm HH:MM        set the alarm (in the zone being shown)
-  clear              cancel the alarm
-  calibrate          adjust the speed with a stopwatch
-  gif [N]            save N seconds (default 60) as an animated GIF
-  quit               exit"""
+WELCOME = f"""{BOLD}RELOJ DE LISTA CIRCULAR{RESET}
+
+Escribe la hora actual de Bogota y el reloj correra solo desde ahi.
+  - Ctrl+C en cualquier momento pausa el reloj y abre el menu.
+  - La ventana debe medir al menos 104 columnas por 24 filas.
+"""
+
+MENU = f"""{BOLD}Comandos{RESET} (Enter vuelve al reloj)
+  time HH:MM[:SS]   cambia la hora (hora de Bogota)       {DIM}ej: time 14:30{RESET}
+  zone NOMBRE       {{zones}}  {DIM}ej: zone tokio{RESET}
+  alarm HH:MM       programa la alarma en la zona actual  {DIM}ej: alarm 07:15{RESET}
+  clear             cancela la alarma
+  calibrate         ajusta la velocidad con un cronometro
+  gif [N]           guarda N segundos (60 por defecto) como GIF animado
+  quit              salir"""
+
+TIME_FORMAT_HINT = "usa el formato HH:MM o HH:MM:SS, por ejemplo 14:30"
 
 
 class LiveInterface:
@@ -35,85 +49,122 @@ class LiveInterface:
         self.__pacer = Pacer()
 
     def run(self) -> None:
-        self.__ask_initial_time()
-        print(CLEAR_SCREEN, end="")
-        running = True
-        while running:
-            try:
-                self.__show()
-                self.__pacer.wait()
-                self.__app.advance(1)
-            except KeyboardInterrupt:
-                running = self.__menu()
+        print(CLEAR_SCREEN + WELCOME)
+        try:
+            self.__ask_initial_time()
+        except (KeyboardInterrupt, EOFError):
+            print("Hasta luego.")
+            return
+        print(CLEAR_SCREEN + HIDE_CURSOR, end="")
+        try:
+            running = True
+            while running:
+                try:
+                    self.__show()
+                    self.__pacer.wait()
+                    self.__app.advance(1)
+                except KeyboardInterrupt:
+                    running = self.__menu()
+        finally:
+            print(f"{SHOW_CURSOR}{CLEAR_SCREEN}Hasta luego.")
 
     def __ask_initial_time(self) -> None:
         while True:
             try:
-                self.__app.set_time(*parse_time(input("Current time in Bogota (HH:MM:SS): ")))
+                self.__app.set_time(*parse_time(input("Hora actual en Bogota (HH:MM:SS): ")))
                 return
             except ValueError:
-                print("Invalid format. Example: 14:30:15")
+                print(f"{RED}Formato no valido:{RESET} {TIME_FORMAT_HINT}")
 
     def __show(self) -> None:
         """Redraws in place. It must fit the window, or every frame would scroll it."""
         reading = self.__app.reading()
         picture = self.__view.render(self.__app.render_compact())
         if reading.alarm_ringing:
-            status = f"{RED}*** ALARMA SONANDO ***{RESET}{BELL}"
+            status = f"{RED}{BOLD}*** ALARMA SONANDO ***{RESET}  Ctrl+C: menu{BELL}"
         else:
-            status = f"{reading.alarm_label}   Ctrl+C: menu"
+            status = f"{reading.alarm_label}   {DIM}Ctrl+C: menu{RESET}"
         print(f"{CURSOR_HOME}{picture}{NEWLINE}{' ' * MARGIN}{status}{CLEAR_LINE}",
               end="", flush=True)
 
     def __menu(self) -> bool:
         """Returns False when the program should end."""
-        print(CLEAR_SCREEN + MENU)
+        reading = self.__app.reading()
+        print(f"{SHOW_CURSOR}{CLEAR_SCREEN}{BOLD}PAUSA{RESET}  [{reading.zone_name}] "
+              f"{reading.time_text()}  {reading.alarm_label}{NEWLINE}")
+        print(MENU.replace("{zones}", ", ".join(self.__app.zone_names).lower()))
         while True:
             try:
-                line = input("> ")
-                if line.strip().lower() == "quit":
+                line = input(f"{NEWLINE}> ")
+                if line.strip().lower() in ("quit", "q", "exit"):
                     return False
                 if line.strip() == "":
-                    print(CLEAR_SCREEN, end="")
+                    print(CLEAR_SCREEN + HIDE_CURSOR, end="")
                     return True
-                self.__execute(line)
+                print(f"{GREEN}{self.__execute(line)}{RESET}")
             except ValueError as error:
-                print(f"Invalid input: {error}")
+                print(f"{RED}No se pudo:{RESET} {error}")
             except (KeyboardInterrupt, EOFError):
                 return False
 
-    def __execute(self, line: str) -> None:
+    def __execute(self, line: str) -> str:
+        """Run one menu command. Returns what to tell the user, or raises ValueError."""
         command, _, argument = line.strip().partition(" ")
         command = command.lower()
         if command == "time":
-            self.__app.set_time(*parse_time(argument))
-        elif command == "zone":
-            self.__app.select_zone(argument)
-        elif command == "alarm":
-            hours, minutes, _ = parse_time(argument)
+            self.__app.set_time(*self.__parse(argument))
+            return f"Hora cambiada a {argument.strip()}."
+        if command == "zone":
+            return self.__change_zone(argument.strip())
+        if command == "alarm":
+            hours, minutes, _ = self.__parse(argument)
             self.__app.set_alarm(hours, minutes)
-        elif command == "clear":
+            return f"Alarma programada a las {hours:02d}:{minutes:02d}."
+        if command == "clear":
             self.__app.cancel_alarm()
-        elif command == "calibrate":
-            self.__calibrate()
-        elif command == "gif":
-            self.__save_animation(int(argument) if argument else DEFAULT_ANIMATION_SECONDS)
-        else:
-            print(MENU)
+            return "Alarma cancelada."
+        if command == "calibrate":
+            return self.__calibrate()
+        if command == "gif":
+            return self.__save_animation(argument)
+        raise ValueError(f"no conozco el comando '{command}'. Escribe uno de la lista de arriba")
 
-    def __calibrate(self) -> None:
-        input(f"Start a stopwatch and press Enter. {CALIBRATION_FRAMES} frames will run; "
-              "stop it when they end.")
+    @staticmethod
+    def __parse(text: str) -> tuple[int, int, int]:
+        try:
+            return parse_time(text)
+        except ValueError:
+            raise ValueError(TIME_FORMAT_HINT)
+
+    def __change_zone(self, name: str) -> str:
+        try:
+            self.__app.select_zone(name)
+        except ValueError:
+            raise ValueError(f"zona desconocida. Opciones: {', '.join(self.__app.zone_names)}")
+        return f"Zona cambiada a {self.__app.reading().zone_name}."
+
+    def __calibrate(self) -> str:
+        input(f"Prepara un cronometro y pulsa Enter para empezar. Se muestran "
+              f"{CALIBRATION_FRAMES} cuadros: detenlo cuando terminen.")
+        print(HIDE_CURSOR + CLEAR_SCREEN, end="")
         for _ in range(CALIBRATION_FRAMES):
             self.__show()
             self.__pacer.wait()
-        print(CLEAR_SCREEN, end="")
-        self.__pacer.calibrate(CALIBRATION_FRAMES, float(input("Seconds on the stopwatch: ")))
-        print(f"Done. Repeat until it reads {CALIBRATION_FRAMES} seconds. "
-              f"Spins per frame: {self.__pacer.spins}")
+        print(SHOW_CURSOR + CLEAR_SCREEN, end="")
+        try:
+            seconds = float(input("Segundos que marco el cronometro: "))
+            self.__pacer.calibrate(CALIBRATION_FRAMES, seconds)
+        except ValueError:
+            raise ValueError("escribe un numero de segundos mayor que cero, por ejemplo 12.5")
+        return (f"Velocidad ajustada. Repite hasta que marque unos {CALIBRATION_FRAMES} "
+                f"segundos (vueltas por cuadro: {self.__pacer.spins}).")
 
-    def __save_animation(self, seconds: int) -> None:
+    def __save_animation(self, argument: str) -> str:
+        try:
+            seconds = int(argument) if argument.strip() else DEFAULT_ANIMATION_SECONDS
+        except ValueError:
+            raise ValueError("escribe un numero entero de segundos, por ejemplo gif 30")
         if seconds <= 0:
-            raise ValueError("Seconds must be positive")
+            raise ValueError("los segundos deben ser mayores que cero")
         GifWriter(self.__app.record(seconds)).save(ANIMATION_FILE)
-        print(f"Saved {ANIMATION_FILE}. Open it in a browser to watch it run.")
+        return f"Guardado en {ANIMATION_FILE}. Arrastralo a un navegador para verlo correr."
