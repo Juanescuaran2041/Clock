@@ -6,15 +6,17 @@ OUTPUT_FILE = "output/clock.bmp"
 ANIMATION_FILE = "output/clock.gif"
 DEFAULT_ANIMATION_SECONDS = 60
 
-HELP = """Commands:
-  (Enter)            advance 1 second
-  + N                advance N seconds
-  time HH:MM[:SS]    set the time (in Bogota time)
-  zone NAME          BOGOTA, NUEVA YORK, LONDRES, MADRID, TOKIO
-  alarm HH:MM        set the alarm (in the zone being shown)
-  clear              cancel the alarm
-  gif [N]            save N seconds (default 60) as an animation that runs by itself
-  quit               exit"""
+HELP = """Comandos:
+  (Enter)            avanza 1 segundo
+  + N                avanza N segundos
+  time HH:MM[:SS]    cambia la hora (hora de Bogotá)
+  zone NOMBRE        BOGOTA, NUEVA YORK, LONDRES, MADRID, TOKIO
+  alarm HH:MM        programa la alarma en la zona que se muestra
+  clear              cancela la alarma
+  gif [N]            guarda N segundos (60 por defecto) como GIF animado
+  quit               salir"""
+
+INVALID_INPUT = "Dato no válido. Revisa el comando, la zona o el formato de la hora (HH:MM[:SS])."
 
 
 class ConsoleInterface:
@@ -24,7 +26,7 @@ class ConsoleInterface:
         self.__app = app
 
     def run(self) -> None:
-        print(f"Open {OUTPUT_FILE} in an image viewer and keep it open.")
+        print(f"Abre {OUTPUT_FILE} en un visor de imágenes y déjalo abierto.")
         self.__ask_initial_time()
         self.__refresh()
         print(HELP)
@@ -32,16 +34,16 @@ class ConsoleInterface:
         while running:
             try:
                 running = self.__execute(input("> "))
-            except ValueError as error:
-                print(f"Invalid input: {error}")
+            except ValueError:
+                print(INVALID_INPUT)
 
     def __ask_initial_time(self) -> None:
         while True:
             try:
-                self.__app.set_time(*parse_time(input("Current time in Bogota (HH:MM:SS): ")))
+                self.__app.set_time(*parse_time(input("Hora actual en Bogotá (HH:MM:SS): ")))
                 return
             except ValueError:
-                print("Invalid format. Example: 14:30:15")
+                print("Formato no válido. Ejemplo: 14:30:15")
 
     def __execute(self, line: str) -> bool:
         """Run one command. Returns False when the program should end."""
@@ -74,11 +76,11 @@ class ConsoleInterface:
         if seconds <= 0:
             raise ValueError("Seconds must be positive")
         GifWriter(self.__app.record(seconds)).save(ANIMATION_FILE)
-        print(f"Saved {ANIMATION_FILE}. Open it in a browser to watch it run.")
+        print(f"Guardado en {ANIMATION_FILE}. Arrástralo a un navegador para verlo correr.")
 
     def __refresh(self) -> None:
         self.__app.render().save_bmp(OUTPUT_FILE)
         reading = self.__app.reading()
         print(f"[{reading.zone_name}] {reading.time_text()}")
         if reading.alarm_ringing:
-            print("\a*** ALARM RINGING ***")
+            print("\a*** ALARMA SONANDO ***")
