@@ -23,17 +23,17 @@ MARGIN = 2  # columns left empty before the picture
 
 WELCOME = f"""{BOLD}RELOJ DE LISTA CIRCULAR{RESET}
 
-Escribe la hora actual de Bogota y el reloj correra solo desde ahi.
-  - Ctrl+C en cualquier momento pausa el reloj y abre el menu.
+Escribe la hora actual de Bogotá y el reloj correrá solo desde ahí.
+  - Ctrl+C en cualquier momento pausa el reloj y abre el menú.
   - La ventana debe medir al menos 104 columnas por 24 filas.
 """
 
 MENU = f"""{BOLD}Comandos{RESET} (Enter vuelve al reloj)
-  time HH:MM[:SS]   cambia la hora (hora de Bogota)       {DIM}ej: time 14:30{RESET}
+  time HH:MM[:SS]   cambia la hora (hora de Bogotá)       {DIM}ej: time 14:30{RESET}
   zone NOMBRE       {{zones}}  {DIM}ej: zone tokio{RESET}
   alarm HH:MM       programa la alarma en la zona actual  {DIM}ej: alarm 07:15{RESET}
   clear             cancela la alarma
-  calibrate         ajusta la velocidad con un cronometro
+  calibrate         ajusta la velocidad con un cronómetro
   gif [N]           guarda N segundos (60 por defecto) como GIF animado
   quit              salir"""
 
@@ -71,19 +71,19 @@ class LiveInterface:
     def __ask_initial_time(self) -> None:
         while True:
             try:
-                self.__app.set_time(*parse_time(input("Hora actual en Bogota (HH:MM:SS): ")))
+                self.__app.set_time(*parse_time(input("Hora actual en Bogotá (HH:MM:SS): ")))
                 return
             except ValueError:
-                print(f"{RED}Formato no valido:{RESET} {TIME_FORMAT_HINT}")
+                print(f"{RED}Formato no válido:{RESET} {TIME_FORMAT_HINT}")
 
     def __show(self) -> None:
         """Redraws in place. It must fit the window, or every frame would scroll it."""
         reading = self.__app.reading()
         picture = self.__view.render(self.__app.render_compact())
         if reading.alarm_ringing:
-            status = f"{RED}{BOLD}*** ALARMA SONANDO ***{RESET}  Ctrl+C: menu{BELL}"
+            status = f"{RED}{BOLD}*** ALARMA SONANDO ***{RESET}  Ctrl+C: menú{BELL}"
         else:
-            status = f"{reading.alarm_label}   {DIM}Ctrl+C: menu{RESET}"
+            status = f"{reading.alarm_label}   {DIM}Ctrl+C: menú{RESET}"
         print(f"{CURSOR_HOME}{picture}{NEWLINE}{' ' * MARGIN}{status}{CLEAR_LINE}",
               end="", flush=True)
 
@@ -144,7 +144,7 @@ class LiveInterface:
         return f"Zona cambiada a {self.__app.reading().zone_name}."
 
     def __calibrate(self) -> str:
-        input(f"Prepara un cronometro y pulsa Enter para empezar. Se muestran "
+        input(f"Prepara un cronómetro y pulsa Enter para empezar. Se muestran "
               f"{CALIBRATION_FRAMES} cuadros: detenlo cuando terminen.")
         print(HIDE_CURSOR + CLEAR_SCREEN, end="")
         for _ in range(CALIBRATION_FRAMES):
@@ -152,10 +152,10 @@ class LiveInterface:
             self.__pacer.wait()
         print(SHOW_CURSOR + CLEAR_SCREEN, end="")
         try:
-            seconds = float(input("Segundos que marco el cronometro: "))
+            seconds = float(input("Segundos que marcó el cronómetro: "))
             self.__pacer.calibrate(CALIBRATION_FRAMES, seconds)
         except ValueError:
-            raise ValueError("escribe un numero de segundos mayor que cero, por ejemplo 12.5")
+            raise ValueError("escribe un número de segundos mayor que cero, por ejemplo 12.5")
         return (f"Velocidad ajustada. Repite hasta que marque unos {CALIBRATION_FRAMES} "
                 f"segundos (vueltas por cuadro: {self.__pacer.spins}).")
 
@@ -163,8 +163,8 @@ class LiveInterface:
         try:
             seconds = int(argument) if argument.strip() else DEFAULT_ANIMATION_SECONDS
         except ValueError:
-            raise ValueError("escribe un numero entero de segundos, por ejemplo gif 30")
+            raise ValueError("escribe un número entero de segundos, por ejemplo gif 30")
         if seconds <= 0:
             raise ValueError("los segundos deben ser mayores que cero")
         GifWriter(self.__app.record(seconds)).save(ANIMATION_FILE)
-        return f"Guardado en {ANIMATION_FILE}. Arrastralo a un navegador para verlo correr."
+        return f"Guardado en {ANIMATION_FILE}. Arrástralo a un navegador para verlo correr."
